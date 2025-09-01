@@ -45,3 +45,9 @@ resource "azurerm_storage_share" "strg_shares" {
   storage_account_id = azurerm_storage_account.strg.id
   quota             = 15 # Quota in GB
 }
+
+output "storage_account_id" {
+  description = "The ID of the storage account."
+  value       = azurerm_storage_account.strg.id
+}
+
