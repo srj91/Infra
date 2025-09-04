@@ -24,3 +24,8 @@ variable "environment" {
   type        = string
 }
 
+variable "global_tags" {
+  description = "A map of tags to assign to the storage account."
+  type        = map(string)
+  default     = {}
+}
