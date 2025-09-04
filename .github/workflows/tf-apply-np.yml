@@ -1,27 +1,30 @@
-name: Terraform Plan (np)
+name: Terraform Apply (np)
+
 on:
-  pull_request:
-    paths:
-      - 'stacks/np/**'
-      - 'modules/**'
+  workflow_dispatch:  # manual trigger from Actions tab
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: write
 
 jobs:
-  plan:
+  apply:
     runs-on: ubuntu-latest
+    # optional: require approvals by using an environment:
+    # environment: np
     steps:
       - uses: actions/checkout@v4
+
       - uses: azure/login@v2
         with:
           client-id:      ${{ secrets.AZ_CLIENT_ID }}
           tenant-id:      ${{ secrets.AZ_TENANT_ID }}
           subscription-id:${{ secrets.AZ_SUBSCRIPTION_ID }}
+
       - uses: hashicorp/setup-terraform@v3
-        with: { terraform_version: 1.8.5 }
+        with:
+          terraform_version: 1.8.5
+
       - name: Terraform Init
         working-directory: Infra/stacks/np
         run: |
@@ -30,6 +33,17 @@ jobs:
             -backend-config="storage_account_name=${{ secrets.TFSTATE_SA }}" \
             -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
             -backend-config="key=np.tfstate"
-      - name: Terraform Plan
+
+      - name: Terraform Apply
         working-directory: Infra/stacks/np
-        run: terraform plan -input=false -out out.plan
+        run: |
+          terraform apply -input=false -auto-approve \
+            -var='location=${{ vars.LOCATION }}' \
+            -var='rg_name=${{ vars.RG_NAME }}' \
+            -var='vnet_name=${{ vars.VNET_NAME }}' \
+            -var='subnet_name=${{ vars.SUBNET_NAME }}' \
+            -var="vnet_address_space=${{ vars.VNET_ADDRESS_SPACE }}" \
+            -var="subnet_prefixes=${{ vars.SUBNET_PREFIXES }}" \
+            -var='acr_name=${{ vars.ACR_NAME }}' \
+            -var='storage_account=${{ vars.STORAGE_ACCOUNT }}' \
+            -var='global_tags=${{ vars.GLOBAL_TAGS }}'
